@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from geoalchemy2.functions import ST_Contains, ST_GeomFromText
+from urllib3 import request
 from app.database import SessionLocal
 from app.models import Zone, Driver
 from app.schemas import DriverCheckRequest, DriverCheckResponse
@@ -13,6 +14,18 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+query = db.query(Zone).filter(ST_Contains(Zone.geom, point))
+if request.current_time:
+    query = query.filter(
+        (Zone.valid_from <= request.current_time) | (Zone.valid_from.is_(None)),
+        (Zone.valid_to >= request.current_time) | (Zone.valid_to.is_(None))
+    )
+if request.weather:
+    query = query.filter((Zone.weather_condition == request.weather) | (Zone.weather_condition.is_(None)))
+# etc.
+
 
 @router.post("/can_accept_order", response_model=DriverCheckResponse)
 def can_accept_order(request: DriverCheckRequest, db: Session = Depends(get_db)):
