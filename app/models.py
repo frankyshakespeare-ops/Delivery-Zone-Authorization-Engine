@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, func
+from sqlalchemy import Column, Float, Integer, String, DateTime, func
 from geoalchemy2 import Geometry
 from app.database import Base
 
@@ -23,4 +23,8 @@ class Order(Base):   # Pour la V3 (clustering)
     __tablename__ = "orders"
     id = Column(Integer, primary_key=True, index=True)
     position = Column(Geometry("POINT", srid=4326), nullable=False)
+    created_at = Column(DateTime, server_default=func.now())
+    lat = Column(Float, nullable=False)
+    lon = Column(Float, nullable=False)
+    
     created_at = Column(DateTime, server_default=func.now())
