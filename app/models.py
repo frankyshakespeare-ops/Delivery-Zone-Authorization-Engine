@@ -8,7 +8,7 @@ class Zone(Base):
     name = Column(String, nullable=False)
     category = Column(String, default="delivery")
     geom = Column(Geometry("POLYGON", srid=4326), nullable=False)
-    # Pour les zones dynamiques (V2)
+    # For dynamic areas (V2)
     valid_from = Column(DateTime, nullable=True)
     valid_to = Column(DateTime, nullable=True)
     weather_condition = Column(String, nullable=True)   # ex: "rain", "clear"
@@ -20,7 +20,7 @@ class Driver(Base):
     last_position = Column(Geometry("POINT", srid=4326), nullable=True)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
-class Order(Base):   # Pour la V3 (clustering)
+class Order(Base):   # For V3 (clustering)
     __tablename__ = "orders"
     id = Column(Integer, primary_key=True, index=True)
     position = Column(Geometry("POINT", srid=4326), nullable=False)
@@ -34,10 +34,10 @@ class Hotspot(Base):
     __tablename__ = "hotspots"
     
     id = Column(Integer, primary_key=True, index=True)
-    # On stocke la forme de la zone (le polygone)
+    # We store the shape of the area (the polygon)
     geom = Column(Geometry("POLYGON", srid=4326), nullable=False)
-    # On stocke quelques métriques pour l'analyse
+    # The number of orders detected in this hotspot area during the last time window
     order_count = Column(Integer)
     surge_multiplier = Column(Float, default=1.5)
-    # L'heure à laquelle le hotspot a été détecté
+    # The time at which the hotspot was detected
     created_at = Column(DateTime, server_default=func.now())
