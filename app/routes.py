@@ -286,3 +286,63 @@ def get_anomalies(db: Session = Depends(get_db)):
         } 
         for d in anomalies if d.last_position is not None
     ]
+
+# --- Endpoint 5 : Récupération des zones au format GeoJSON pour Leaflet ---
+@router.get("/zones/geojson")
+def get_zones_geojson(db: Session = Depends(get_db)):
+    zones = db.query(Zone).all()
+    features = []
+    
+    for z in zones:
+        # Conversion PostGIS -> Shapely -> Dict GeoJSON
+        shapely_geom = to_shape(z.geom)
+        
+        features.append({
+            "type": "Feature",
+            "geometry": mapping(shapely_geom),
+            "properties": {
+                "id": z.id,
+                "name": z.name,
+                "category": z.category,  # Indispensable pour Leaflet !
+                # On ajoute une couleur par défaut selon la catégorie
+                "color": "green" if z.category == "delivery" else "red"
+            }
+        })
+        
+    return {
+        "type": "FeatureCollection", 
+        "features": features
+    }
+
+# --- Endpoint 6 : Récupération des positions des drivers pour la carte (avec détection d'anomalies) ---
+@router.get("/drivers/positions")
+def get_drivers_positions(db: Session = Depends(get_db)):
+    # 1. On récupère les IDs des drivers qui sont BIEN dans la zone Nairobi
+    # On fait une seule requête pour tout le groupe (beaucoup plus rapide !)
+    drivers_in_city_query = db.query(Driver.id).filter(
+        db.query(Zone).filter(
+            Zone.category == 'city_boundary',
+            func.ST_Contains(Zone.geom, Driver.last_position)
+        ).exists()
+    ).all()
+    
+    # On transforme le résultat en un "set" pour une recherche ultra-rapide en Python
+    safe_driver_ids = {d[0] for d in drivers_in_city_query}
+
+    # 2. On récupère les derniers drivers (limite 1000)
+    drivers = db.query(Driver).order_by(Driver.id.desc()).limit(1000).all()
+    
+    positions = []
+    for d in drivers:
+        if d.last_position is not None:
+            # Si l'ID n'est pas dans notre liste "safe", c'est une anomalie
+            is_anomaly = d.id not in safe_driver_ids
+            
+            positions.append({
+                "id": d.id,
+                "lat": db.scalar(func.ST_Y(d.last_position)),
+                "lon": db.scalar(func.ST_X(d.last_position)),
+                "is_anomaly": is_anomaly
+            })
+            
+    return positions
