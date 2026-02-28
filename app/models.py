@@ -6,6 +6,7 @@ class Zone(Base):
     __tablename__ = "zones"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
+    category = Column(String, default="delivery")
     geom = Column(Geometry("POLYGON", srid=4326), nullable=False)
     # Pour les zones dynamiques (V2)
     valid_from = Column(DateTime, nullable=True)

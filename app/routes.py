@@ -8,6 +8,8 @@ from geoalchemy2.functions import ST_ConvexHull, ST_Collect, ST_Centroid, ST_AsG
 import json
 from app.models import Hotspot
 from sqlalchemy import not_
+from geoalchemy2.shape import to_shape
+from shapely.geometry import mapping
 
 
 # Imports internes
@@ -245,7 +247,7 @@ def get_surge_zone(db: Session = Depends(get_db)):
         "center": json.loads(result.center)
     }
 
-
+# Helper pour sauvegarder la zone de chaleur dans l'historique
 def save_hotspot_to_history(db: Session, geom, count: int):
     """Enregistre la zone détectée dans l'historique."""
     if geom is None:
@@ -259,17 +261,16 @@ def save_hotspot_to_history(db: Session, geom, count: int):
     db.add(new_hotspot)
     db.commit()
 
-
+# --- Endpoint 4 : Anomalies de position des drivers ---
 @router.get("/drivers/anomalies")
 def get_anomalies(db: Session = Depends(get_db)):
     """
-    Renvoie les drivers dont la dernière position connue n'intersecte 
-    AUCUNE zone autorisée enregistrée dans la table Zone.
+    Détecte uniquement les drivers hors de la frontière globale de la ville.
     """
-    # On cherche les drivers pour lesquels il n'existe aucune zone 
-    # contenant leur position actuelle.
+    # On cherche les drivers qui ne sont contenus dans AUCUNE zone de type 'city_boundary'
     anomalies = db.query(Driver).filter(
         ~db.query(Zone).filter(
+            Zone.category == 'city_boundary',
             func.ST_Contains(Zone.geom, Driver.last_position)
         ).exists()
     ).all()
@@ -277,11 +278,11 @@ def get_anomalies(db: Session = Depends(get_db)):
     return [
         {
             "driver_id": d.id,
-            "last_seen": d.updated_at, # Si tu as ce champ
             "position": {
                 "lat": db.scalar(func.ST_Y(d.last_position)),
                 "lon": db.scalar(func.ST_X(d.last_position))
-            }
+            },
+            "status": "CRITICAL_OUT_OF_BOUNDS"
         } 
         for d in anomalies if d.last_position is not None
     ]
