@@ -28,3 +28,15 @@ class Order(Base):   # Pour la V3 (clustering)
     lon = Column(Float, nullable=False)
     
     created_at = Column(DateTime, server_default=func.now())
+
+class Hotspot(Base):
+    __tablename__ = "hotspots"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    # On stocke la forme de la zone (le polygone)
+    geom = Column(Geometry("POLYGON", srid=4326), nullable=False)
+    # On stocke quelques métriques pour l'analyse
+    order_count = Column(Integer)
+    surge_multiplier = Column(Float, default=1.5)
+    # L'heure à laquelle le hotspot a été détecté
+    created_at = Column(DateTime, server_default=func.now())
