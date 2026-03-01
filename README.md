@@ -38,12 +38,6 @@ This is not just a map, it is a decision engine that processes thousands of posi
 ##  Architecture
 
 ![Architecture Preview](static/architecture.png)
-graph TD
-    A[Frontend: Leaflet.js] -- API REST / JSON --> B[Backend: FastAPI]
-    B -- GeoAlchemy2 --> C[(PostgreSQL + PostGIS)]
-    C -- GiST Index --> B
-    D[OSM Data] -- OSMnx --> C
-    E[Simulation Engine] -- Mass Update --> C
 
 
 ### Technical Stack
@@ -234,26 +228,8 @@ This approach makes the project realistic and relevant for applications in the K
 
 
 ##  Project structure
+![Project structure Preview](static/structure.png)
 
-delivery-zone-engine/
-├── app/
-│   ├── __init__.py
-│   ├── main.py                # FastAPI entry point
-│   ├── database.py             # Connection and DB session
-│   ├── models.py               # SQLAlchemy Models
-│   ├── schemas.py              # Pydantic Schemas
-│   ├── routes.py               # Endpoints de l'API
-│   └── config.py               # Configuration (environment variables)
-├── scripts/
-│   ├── init_db.py              # Creation of tables
-│   ├── insert_zones.py         # Insertion of example areas
-│   └── simulate_drivers.py     # Generation of 100k delivery drivers
-├── static/
-│   └── index.html              # Leaflet interactive map
-├── docker-compose.yml          # Launching PostGIS with Docker
-├── requirements.txt
-├── README.md
-└── .gitignore
 
 
 ## Highlighted Skills
