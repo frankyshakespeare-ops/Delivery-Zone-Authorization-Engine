@@ -13,8 +13,8 @@ from geoalchemy2.elements import WKTElement
 
 def simulate():
     db = SessionLocal()
-    print("🚀 Simulation Geo-Guard démarrée...")
-    print("📡 Envoi des coordonnées GPS en temps réel...")
+    print(" Simulation Geo-Guard démarrée...")
+    print(" Envoi des coordonnées GPS en temps réel...")
 
     # On récupère ou crée 15 drivers pour la démo
     drivers = db.query(Driver).limit(15).all()
@@ -58,7 +58,7 @@ def simulate():
             time.sleep(2) # On simule un ping toutes les 2 secondes
 
     except KeyboardInterrupt:
-        print("\n🛑 Simulation arrêtée.")
+        print(" Simulation arrêtée.")
     finally:
         db.close()
 
